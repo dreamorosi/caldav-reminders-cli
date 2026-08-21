@@ -129,7 +129,7 @@ Reminder JSON includes:
 - Binary: `reminders`
 - Repository: `caldav-reminders-cli`
 - Release targets: `aarch64-unknown-linux-gnu` and `x86_64-unknown-linux-gnu`
-- Distribution: GitHub Releases, cargo-dist shell installer, and Homebrew formula
+- Distribution: GitHub Releases and a cargo-dist shell installer
 - GitHub Actions must pin third-party actions to commit SHAs.
 - Release tooling downloaded during CI must be verified against a pinned checksum before it is executed. Piping a remotely fetched script into a shell is not acceptable.
 - The release workflow's token is read-only by default. Only the job that uploads artifacts and creates the GitHub Release may hold `contents: write`, and jobs that never call the GitHub API receive no token at all.

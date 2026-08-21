@@ -179,27 +179,6 @@ PATCHES: list[Patch] = [
         ),
     ),
     Patch(
-        name="publish-homebrew-formula has no token for this repository",
-        before=(
-            "  publish-homebrew-formula:\n"
-            "    needs:\n      - plan\n      - host\n"
-            '    runs-on: "ubuntu-22.04"\n'
-            "    env:\n"
-            "      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}\n"
-            "      PLAN: ${{ needs.plan.outputs.val }}\n"
-        ),
-        after=(
-            "  publish-homebrew-formula:\n"
-            "    needs:\n      - plan\n      - host\n"
-            '    runs-on: "ubuntu-22.04"\n'
-            "    # Hardened: the tap is a separate repository, written with\n"
-            "    # HOMEBREW_TAP_TOKEN, so no rights on this repository are needed.\n"
-            "    permissions:\n      contents: read\n"
-            "    env:\n"
-            "      PLAN: ${{ needs.plan.outputs.val }}\n"
-        ),
-    ),
-    Patch(
         name="announce job has no token",
         before=(
             '    runs-on: "ubuntu-22.04"\n'

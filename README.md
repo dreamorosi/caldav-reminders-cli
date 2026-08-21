@@ -57,12 +57,6 @@ curl --proto '=https' --tlsv1.2 -LsSf \
   https://github.com/dreamorosi/caldav-reminders-cli/releases/latest/download/reminders-installer.sh | sh
 ```
 
-Homebrew:
-
-```sh
-brew install dreamorosi/tap/reminders
-```
-
 From source:
 
 ```sh
@@ -607,7 +601,7 @@ Releases are cut with [cargo-dist](https://opensource.axo.dev/cargo-dist/).
    `major`. It bumps `Cargo.toml`, commits, and pushes tag `vX.Y.Z`.
 2. Run the **Release** workflow on that tag, passing the tag as the
    `Release Tag` input. It builds both Linux architectures, publishes the
-   GitHub release with the shell installer, and updates the Homebrew tap.
+   GitHub release with the shell installer.
 
 #### The release workflow is generated, then hardened
 
@@ -631,9 +625,8 @@ is not configurable.
    uploads artifacts and creates the GitHub Release, is granted
    `contents: write`.
 2. **Jobs that never call the GitHub API get no token.** `GH_TOKEN` is removed
-   from `build-local-artifacts`, `build-global-artifacts`,
-   `publish-homebrew-formula` (which writes the tap with `HOMEBREW_TAP_TOKEN`),
-   and `announce`. It remains in `plan`, where `dist host --steps=create` may
+   from `build-local-artifacts`, `build-global-artifacts`, and `announce`. It
+   remains in `plan`, where `dist host --steps=create` may
    read the API, and in `host`.
 3. **`dist` is installed from a digest-verified archive.** The template pipes a
    remotely fetched installer into `sh`, in a step that had a write-scoped token
