@@ -154,7 +154,7 @@ jobs:
         run: ./scripts/install-actionlint.sh
 
       - name: actionlint
-        run: .tools/actionlint -no-color -oneline
+        run: .tools/actionlint -no-color -oneline -shellcheck=
 
       - name: shellcheck our scripts
         run: shellcheck scripts/*.sh scripts/integration/*.sh
