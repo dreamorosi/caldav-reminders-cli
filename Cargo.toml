@@ -1,0 +1,51 @@
+[package]
+name = "reminders"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+license = "MIT"
+authors = ["Andrea Amorosi <dreamorosi@gmail.com>"]
+repository = "https://github.com/dreamorosi/caldav-reminders-cli"
+homepage = "https://github.com/dreamorosi/caldav-reminders-cli"
+description = "Linux command-line client for managing reminders in a CalDAV VTODO collection"
+keywords = ["caldav", "reminders", "vtodo", "icalendar", "cli"]
+categories = ["command-line-utilities"]
+exclude = ["/.github", "/SPEC.md"]
+
+[[bin]]
+name = "reminders"
+path = "src/main.rs"
+
+[lib]
+name = "reminders"
+path = "src/lib.rs"
+
+[dependencies]
+age = { version = "0.12", default-features = false, features = ["armor"] }
+chrono = { version = "0.4.45", default-features = false, features = ["std", "clock", "serde"] }
+chrono-tz = "0.10"
+clap = { version = "4.6", features = ["derive"] }
+dirs = "6"
+keyring = { version = "4.1", default-features = false, features = ["v1"] }
+quick-xml = "0.41"
+reqwest = { version = "0.13", default-features = false, features = ["blocking", "rustls", "http2", "system-proxy"] }
+rpassword = "7"
+secrecy = "0.10"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+thiserror = "2"
+toml = "1"
+url = "2"
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+assert_cmd = "2"
+chrono = "0.4.45"
+mockito = "1.7"
+tempfile = "3"
+uuid = { version = "1", features = ["v4"] }
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
