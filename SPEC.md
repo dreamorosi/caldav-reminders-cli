@@ -133,7 +133,7 @@ Reminder JSON includes:
 - GitHub Actions must pin third-party actions to commit SHAs.
 - Release tooling downloaded during CI must be verified against a pinned checksum before it is executed. Piping a remotely fetched script into a shell is not acceptable.
 - The release workflow's token is read-only by default. Only the job that uploads artifacts and creates the GitHub Release may hold `contents: write`, and jobs that never call the GitHub API receive no token at all.
-- cargo-dist generates the release workflow and cannot express the two rules above, so a documented, idempotent post-generation patch applies them and CI fails if either the generated half or the patched half has drifted.
+- cargo-dist generates the release workflow and cannot express the two rules above, so a documented, idempotent post-generation patch applies them and CI fails if either the generated half or the patched half has drifted. Release commands explicitly accept that reviewed difference only after this independent check.
 
 ## Verification
 

@@ -615,7 +615,7 @@ dist generate && scripts/harden-release-workflow.py
 CI runs exactly that and then `git diff --exit-code`, so the check covers both
 halves and cannot claim "no drift" while quietly dropping the hardening.
 
-Three things are patched in, because **cargo-dist 0.32 cannot express them**:
+Four things are patched in, because **cargo-dist 0.32 cannot express them**:
 `github-custom-job-permissions` is only consumed for user-defined publish jobs
 (the template ignores it for `plan`, `host`, and the build jobs), there is no
 option for the root `permissions` block, and the install command used by `plan`
@@ -633,6 +633,10 @@ is not configurable.
    in its environment. `scripts/install-dist.sh` downloads the pinned release
    archive, checks it against a pinned SHA-256, and refuses to run anything that
    does not match.
+4. **Release commands accept the intentional workflow changes.** Each cargo-dist
+   planning, build, and hosting command uses `--allow-dirty`. CI still regenerates
+   and hardens the workflow, then fails on any diff, so this bypass applies only
+   after the independent drift check has passed.
 
 The script is idempotent and fails loudly if the upstream template changes shape,
 rather than silently leaving the workflow unhardened. `--check` reports whether

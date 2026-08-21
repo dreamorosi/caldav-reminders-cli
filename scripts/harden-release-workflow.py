@@ -2,7 +2,7 @@
 """Re-apply security hardening to the cargo-dist generated release workflow.
 
 `dist generate` writes .github/workflows/release.yml from dist-workspace.toml.
-Three things in that template are unsafe for this repository and cannot be
+Four things in that template are unsafe or incompatible with this repository and cannot be
 configured away in cargo-dist 0.32:
 
 1. The whole workflow is granted `contents: write`, and every job — including
@@ -14,6 +14,7 @@ configured away in cargo-dist 0.32:
 2. `dist` is installed with `curl ... | sh`, with no integrity check, in the
    same step environment as that token.
 3. Jobs that never touch the GitHub API still receive the token.
+4. Runtime commands reject the intentionally hardened workflow as out of date.
 
 So this script rewrites the generated file. It is strictly a text transform
 over exact expected snippets: if the upstream template changes, the matching
@@ -52,6 +53,8 @@ HEADER = """
 #      compromised build or install step has no token to abuse;
 #   3. install `dist` through scripts/install-dist.sh, which checks a pinned
 #      SHA-256 digest, instead of piping a remotely fetched script into `sh`.
+#   4. pass `--allow-dirty` to release commands because CI separately proves
+#      that the generated workflow plus this hardening has not drifted.
 #
 # cargo-dist 0.32 cannot express any of this: `github-custom-job-permissions`
 # is only consumed for user-defined publish jobs, and neither the root
@@ -179,6 +182,53 @@ PATCHES: list[Patch] = [
         ),
     ),
     Patch(
+        name="plan accepts the intentionally hardened workflow",
+        before=(
+            "          dist ${{ (inputs.tag && inputs.tag != 'dry-run' && "
+            "format('host --steps=create --tag={0}', inputs.tag)) || 'plan' }} "
+            "--output-format=json > plan-dist-manifest.json\n"
+        ),
+        after=(
+            "          dist ${{ (inputs.tag && inputs.tag != 'dry-run' && "
+            "format('host --steps=create --tag={0}', inputs.tag)) || 'plan' }} "
+            "--allow-dirty --output-format=json > plan-dist-manifest.json\n"
+        ),
+    ),
+    Patch(
+        name="local build accepts the intentionally hardened workflow",
+        before=(
+            "          dist build ${{ needs.plan.outputs.tag-flag }} --print=linkage "
+            "--output-format=json ${{ matrix.dist_args }} > dist-manifest.json\n"
+        ),
+        after=(
+            "          dist build ${{ needs.plan.outputs.tag-flag }} --allow-dirty "
+            "--print=linkage --output-format=json ${{ matrix.dist_args }} > "
+            "dist-manifest.json\n"
+        ),
+    ),
+    Patch(
+        name="global build accepts the intentionally hardened workflow",
+        before=(
+            '          dist build ${{ needs.plan.outputs.tag-flag }} --output-format=json '
+            '"--artifacts=global" > dist-manifest.json\n'
+        ),
+        after=(
+            '          dist build ${{ needs.plan.outputs.tag-flag }} --allow-dirty '
+            '--output-format=json "--artifacts=global" > dist-manifest.json\n'
+        ),
+    ),
+    Patch(
+        name="host accepts the intentionally hardened workflow",
+        before=(
+            "          dist host ${{ needs.plan.outputs.tag-flag }} --steps=upload "
+            "--steps=release --output-format=json > dist-manifest.json\n"
+        ),
+        after=(
+            "          dist host ${{ needs.plan.outputs.tag-flag }} --allow-dirty "
+            "--steps=upload --steps=release --output-format=json > dist-manifest.json\n"
+        ),
+    ),
+    Patch(
         name="announce job has no token",
         before=(
             '    runs-on: "ubuntu-22.04"\n'
@@ -203,6 +253,9 @@ TOKEN_JOBS = ("plan", "host")
 # `plan` and `build-local-artifacts` are the two jobs that install dist fresh;
 # the rest download the cached binary from `plan`.
 EXPECTED_VERIFIED_INSTALLS = 2
+
+# Release planning, both build phases, and hosting all inspect generated CI.
+EXPECTED_ALLOW_DIRTY_COMMANDS = 4
 
 # The generated workflow installs rustup with a piped download, but only inside
 # `if: ${{ matrix.container }}`. This project builds both targets on plain
@@ -276,6 +329,15 @@ def audit(text: str) -> list[str]:
         problems.append(
             f"expected {EXPECTED_VERIFIED_INSTALLS} digest-verified dist installs "
             f"(plan and build-local-artifacts), found {len(installs)}"
+        )
+
+    allow_dirty_commands = re.findall(
+        r"^\s*dist (?:build|host|\$\{\{).+ --allow-dirty(?: |$)", text, re.MULTILINE
+    )
+    if len(allow_dirty_commands) != EXPECTED_ALLOW_DIRTY_COMMANDS:
+        problems.append(
+            f"expected --allow-dirty on {EXPECTED_ALLOW_DIRTY_COMMANDS} release commands, "
+            f"found {len(allow_dirty_commands)}"
         )
 
     for line in text.splitlines():
